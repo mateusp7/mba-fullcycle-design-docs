@@ -1,0 +1,4 @@
+interface:
+  display_name: "ADR Writer"
+  short_description: "Gera ADRs rastreáveis em português"
+  default_prompt: "Use $adr-writer para gerar ADRs rastreáveis a partir da transcrição, mapping e código deste repositório."
