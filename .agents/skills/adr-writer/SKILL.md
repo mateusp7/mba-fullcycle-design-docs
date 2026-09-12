@@ -11,14 +11,14 @@ Use esta skill para registrar decisões arquiteturais fechadas da reunião técn
 
 Esta skill documenta o **porquê da decisão**, seus limites e trade-offs. Não substitui o FDD: não detalha SQL, modelos Prisma completos, contratos HTTP, assinaturas de funções, fluxos passo a passo ou plano de implementação, salvo o mínimo necessário para tornar a decisão inequívoca.
 
-Não altere `src/`, `prisma/`, `tests/`, `package.json`, configurações ou ADRs existentes. Nesta tarefa, a única saída de produto da skill são ADRs em `docs/adrs/`; a validação pode criar apenas arquivos temporários fora da entrega.
+Não altere `src/`, `prisma/`, `tests/`, `package.json` ou configurações. Preserve ADRs existentes, exceto quando o usuário pedir explicitamente a atualização de um ADR isolado; nunca altere ADRs fora do escopo reservado. Nesta tarefa, a única saída de produto da skill são ADRs em `docs/adrs/`; a validação pode criar apenas arquivos temporários fora da entrega.
 
 ## Modos de uso
 
 Interprete o pedido do usuário antes de escrever:
 
 - **ADR isolado:** quando o usuário indicar uma decisão, gere ou atualize somente o ADR correspondente. Não crie placeholders para as demais decisões. Valide a estrutura do arquivo; a contagem de pacote não se aplica até a geração completa.
-- **Pacote completo:** quando o usuário pedir o pacote, gere inicialmente os seis ADRs-base abaixo. O pacote final deve ter de 5 a 8 ADRs no padrão de nome exigido. ADRs adicionais só entram se houver uma decisão arquitetural fechada ou uma necessidade de compatibilidade claramente evidenciada.
+- **Pacote completo:** quando o usuário pedir o pacote, o agente principal deve executar o modo de orquestração descrito abaixo. Use as seis decisões-base como matriz de cobertura, confirme cada uma nas fontes e gere ADR somente para as decisões realmente fechadas. O pacote final deve ter de 5 a 8 ADRs no padrão de nome exigido. ADRs adicionais só entram se houver uma decisão arquitetural fechada ou uma necessidade de compatibilidade claramente evidenciada.
 - **Revisão/validação:** quando o usuário pedir revisão, não reescreva automaticamente. Inspecione os arquivos, reporte falhas por arquivo e corrija apenas se isso tiver sido solicitado.
 
 Antes de escrever, inventarie `docs/adrs/`. Preserve arquivos existentes e seus números. Não renomeie nem sobrescreva um ADR preexistente sem pedido explícito. Para novos arquivos, use o próximo número de três dígitos livre (`ADR-001`, `ADR-002`, ...), verificando colisões inclusive com nomes fora do padrão.
@@ -45,9 +45,11 @@ Separe explicitamente quatro classes, tanto durante a análise quanto no texto f
 
 Uma alternativa plausível que não aparece na transcrição pode ser usada para completar a comparação, mas deve ser marcada exatamente como **“Plausível, não atribuída à reunião”**. Não diga ou sugira que ela foi discutida, proposta ou descartada pelos participantes. Alternativas discutidas devem ser marcadas como **“Discutida na reunião”** e conter fonte `[hh:mm] Nome`.
 
-## Decisões-base do pacote
+## Matriz de cobertura das decisões
 
-No modo pacote completo, cubra inicialmente estas seis decisões, mantendo estes termos do domínio:
+No modo pacote completo, use estas seis decisões como uma matriz específica deste desafio. Elas são candidatas de cobertura, não uma obrigação cega de criar ADRs. O agente principal deve confirmar o fechamento em `TRANSCRICAO.md` e/ou no `docs/mapping.md` antes de reservar ou delegar um ADR. Se uma decisão não tiver evidência de fechamento, marque-a como não confirmada e não gere um placeholder.
+
+As seis entradas da matriz são:
 
 1. **Outbox transacional no MySQL existente.** Evidências principais: `[09:06] Diego`, `[09:08] Larissa`, resumo em `[09:48] Larissa`; código relacionado: `src/modules/orders/order.service.ts`, `prisma/schema.prisma`.
 2. **Retry com backoff e DLQ.** Evidências principais: `[09:15] Diego` a `[09:18] Diego/Larissa`; política fechada de cinco tentativas `1m/5m/30m/2h/12h` e DLQ separada.
@@ -57,6 +59,107 @@ No modo pacote completo, cubra inicialmente estas seis decisões, mantendo estes
 6. **Reuso dos padrões existentes do projeto.** Evidência principal: `[09:27] Bruno` a `[09:30] Larissa`; código relacionado: `src/modules/orders/order.routes.ts`, `src/modules/orders/order.schemas.ts`, `src/shared/errors/app-error.ts`, `src/middlewares/error.middleware.ts`, `src/shared/logger/index.ts`.
 
 Esses caminhos são exemplos de arquivos existentes que devem ser confirmados. Artefatos citados na reunião como `src/worker.ts`, `src/modules/webhooks/`, `webhook_outbox` e `webhook_dead_letter` são **propostos/inexistentes no código-base**, conforme o mapping. Se forem mencionados, escreva “artefato proposto” ou “ainda inexistente”; nunca escreva como se já existissem.
+
+Para cada decisão, classifique o resultado como `Confirmada`, `Não confirmada` ou `Ambígua`. Só `Confirmada` pode virar ADR. Se menos de cinco decisões estiverem confirmadas, não invente cobertura para atingir a meta do pacote: reporte que o pacote não pode satisfazer a validação sem nova evidência.
+
+## Orquestração do pacote completo
+
+Este modo é coordenado pelo agente principal. Subagents são apenas redatores isolados e não tomam decisões de escopo, numeração, título ou destino.
+
+### Papel do agente principal
+
+1. Inspecione explicitamente o inventário de ferramentas/capacidades do runtime antes de decidir como delegar. Enumere as ferramentas disponíveis, seus nomes e descrições; não deduza ausência de colaboração apenas porque o pedido do usuário não contém a palavra “subagent”.
+2. Procure uma ferramenta de colaboração chamando, por exemplo, `collaboration.spawn_agent`, `spawn_agent`, `delegate_task` ou outro equivalente cujo contrato descreva criação/execução de agentes. Considere a ferramenta disponível somente se ela estiver listada e puder ser chamada neste runtime.
+3. Leia e analise **uma única vez** `TRANSCRICAO.md` e `docs/mapping.md` antes de delegar. Extraia a matriz de decisões, timestamps, participantes, alternativas, questões abertas, limites e termos de domínio.
+4. Consulte uma única vez os caminhos de código relevantes e ADRs existentes para verificar os fatos que entrarão nos pacotes de evidências. Não delegue a descoberta da fonte primária.
+5. Confirme quais entradas da matriz estão fechadas. Use a fala de fechamento ou o resumo final, não uma sugestão exploratória isolada. Registre as não confirmadas e ambiguidades sem convertê-las em ADR.
+6. Faça o inventário de `docs/adrs/` e reserve antecipadamente, para cada decisão confirmada: número, título, caminho exato e subagent responsável. Números e nomes devem ser únicos antes da execução.
+7. Se uma ferramenta de colaboração estiver disponível, use-a obrigatoriamente para os ADRs confirmados. Divida o trabalho em ondas de acordo com o limite real de concorrência disponível no ambiente e aguarde a conclusão de uma onda antes de iniciar a próxima quando o limite estiver atingido.
+8. Recolha apenas os retornos compactos dos subagents, verifique os arquivos diretamente no workspace compartilhado e faça a validação final.
+
+O agente principal nunca deve pedir a um subagent que escolha `ADR-NNN`, título ou caminho. Se houver colisão após a reserva, pause a delegação afetada, faça uma nova reserva única e só então retome.
+
+### Pacote compacto de evidências
+
+Antes de cada delegação, monte um pacote independente e suficiente para um ADR. Use este formato conceitual; envie somente a entrada relevante, não os documentos integrais:
+
+```text
+DECISÃO_ID: DEC-01
+TÍTULO: Outbox transacional no MySQL
+ADR_RESERVADO: ADR-001
+SAÍDA_EXATA: docs/adrs/ADR-001-outbox-transacional-no-mysql.md
+
+FONTES_DA_REUNIÃO:
+- [09:06] Diego — consenso sobre outbox na mesma transação.
+- [09:08] Larissa — decisão de usar outbox no MySQL.
+
+ALTERNATIVAS_DISCUTIDAS:
+- Chamada HTTP síncrona em changeStatus — bloqueio por cliente lento; [09:04] Bruno.
+- Redis Streams/Redis Cluster — infraestrutura adicional/overengineering; [09:07] Larissa.
+
+QUESTÕES_ABERTAS_RELACIONADAS:
+- Retenção/arquivamento da outbox foi adiado; [09:08] Diego.
+
+CÓDIGO_EXISTENTE_VERIFICADO:
+- src/modules/orders/order.service.ts:126-179 — changeStatus usa prisma.$transaction.
+- prisma/schema.prisma:5-9 — datasource MySQL.
+
+LIMITES_DA_DECISÃO:
+- A decisão é arquitetural; nomes finais de tabelas/colunas e estratégia de claim pertencem ao FDD.
+
+TERMOS_DO_DOMÍNIO:
+- order, order_status_history, outbox, worker, customer.
+
+INSTRUÇÕES:
+- Escrever somente o arquivo reservado.
+- Não inventar requisitos, decisões, participantes, datas, arquivos ou detalhes não fornecidos.
+- Marcar qualquer artefato novo como proposto/inexistente.
+```
+
+O conteúdo acima é ilustrativo do formato do pacote, não uma fonte adicional. Preencha cada pacote com evidências verificadas para a decisão atribuída. Inclua sempre: ID e título, saída exata, timestamps e participantes relevantes, alternativas discutidas, questões abertas, caminhos reais do código, limites, termos comuns e a proibição explícita de inventar. Se uma alternativa não estiver na transcrição, classifique-a como `Plausível, não atribuída à reunião` antes de enviá-la.
+
+Não envie o conteúdo integral de `TRANSCRICAO.md`, `docs/mapping.md` ou de um ADR existente a cada subagent. O pacote pode conter pequenos resumos e referências verificadas, suficientes para redigir e rastrear a decisão.
+
+### Papel de cada subagent
+
+Cada subagent recebe exatamente uma reserva e um pacote de evidências. Ele deve:
+
+- escrever somente o ADR no caminho exato reservado, usando o template e as regras desta skill;
+- manter `Status`, `Contexto`, `Decisão`, `Alternativas consideradas`, `Consequências positivas`, `Consequências negativas e trade-offs` e `Rastreabilidade`;
+- usar fontes da reunião no formato `[hh:mm] Nome` e citar ao menos um arquivo, módulo ou padrão existente do código;
+- marcar artefatos novos como propostos ou inexistentes;
+- não transformar questões abertas em decisões;
+- não alterar outros ADRs, código, testes, Prisma, configurações ou README;
+- executar a validação individual no arquivo reservado;
+- não devolver o conteúdo completo do ADR ao agente principal.
+
+Como o workspace é compartilhado, o subagent deve salvar diretamente no caminho reservado. O retorno deve conter **somente**:
+
+```text
+CAMINHO: docs/adrs/ADR-NNN-titulo-em-kebab-case.md
+STATUS: gerado | falhou | bloqueado
+VALIDAÇÃO_INDIVIDUAL: passou | falhou | não executada
+RESUMO: até cinco linhas sobre a decisão registrada.
+PENDÊNCIAS: ambiguidades ou lacunas; “nenhuma” quando não houver.
+```
+
+Se não conseguir escrever ou validar, informe `falhou`/`bloqueado` e a pendência curta. Não cole o ADR no retorno.
+
+### Concorrência, ondas e fallback
+
+Determine o limite depois de localizar a ferramenta de colaboração. Use o número de workers que ela expõe ou o limite configurado pelo ambiente/usuário; nunca presuma que seis subagents podem executar ao mesmo tempo. Se o limite for `N`, agrupe as reservas em ondas de até `N`, mantendo um ADR por arquivo.
+
+Se a ferramenta existir, mas não expuser o limite, isso **não** autoriza fallback: chame a ferramenta com um único ADR por vez, mantendo a delegação. Se ela informar `N = 0` ou nenhum worker disponível, registre esse fato e só então use o fallback sequencial. O mesmo vale se a chamada de delegação falhar depois de a ferramenta ter sido encontrada.
+
+Faça fallback para geração **sequencial** pelo agente principal somente em uma destas situações verificáveis:
+
+- nenhuma ferramenta de colaboração equivalente aparece no inventário do runtime;
+- a chamada da ferramenta encontrada falha, após a tentativa de delegação;
+- a ferramenta informa que não há workers disponíveis (`N = 0` ou equivalente).
+
+No fallback, registre a razão concreta no retorno final, por exemplo `ferramenta não listada`, `collaboration.spawn_agent indisponível após tentativa` ou `runtime informou zero workers`. Reutilize exatamente o mesmo pacote compacto de evidências, as reservas antecipadas e a validação individual. O agente principal assume o papel de redator, mas continua proibido de criar ADRs para decisões não confirmadas ou placeholders.
+
+A ausência da palavra “subagent” no pedido do usuário nunca é uma razão válida para fallback. A decisão deve ser baseada somente no inventário e no resultado da chamada do runtime.
 
 ## Processo de análise
 
@@ -195,3 +298,16 @@ python .agents/skills/adr-writer/scripts/validate_adrs.py --mode single --file d
 ```
 
 No final, rode novamente sem `--mode single`. Corrija falhas e repita a validação antes de reportar conclusão. Não conte `docs/adrs/README.md` como ADR.
+
+### Fechamento do pacote orquestrado
+
+Depois que todas as ondas terminarem, o agente principal deve executar esta conferência, mesmo que todos os subagents tenham retornado sucesso:
+
+1. Comparar as reservas com os arquivos criados: todo caminho esperado deve existir, nenhum caminho inesperado deve ter sido criado e cada número deve ser único.
+2. Executar `--mode single --file ...` para cada arquivo esperado e depois executar a validação do pacote.
+3. Confirmar que o pacote cobre pelo menos cinco das seis entradas da matriz. Se uma entrada confirmada não tiver arquivo, corrigir apenas esse ADR; se a cobertura depender de uma decisão não confirmada, reportar a insuficiência em vez de fabricar evidência.
+4. Verificar novamente todos os caminhos de código citados, inclusive os da seção `Rastreabilidade`, e distinguir caminhos existentes de artefatos propostos.
+5. Comparar os ADRs entre si procurando contradições de terminologia, `Status`, fontes, limites e trade-offs. O agente principal pode corrigir somente os ADRs afetados, preservando os demais arquivos e a reserva de nomes.
+6. Executar a validação individual e do pacote novamente após qualquer correção. Só concluir quando ambas passarem ou quando uma lacuna de evidência for reportada de forma explícita.
+
+O retorno final do agente principal deve ser compacto: modo usado, decisões confirmadas e não confirmadas, arquivos gerados, resultado das validações e pendências. Não recite o conteúdo integral dos ADRs.
