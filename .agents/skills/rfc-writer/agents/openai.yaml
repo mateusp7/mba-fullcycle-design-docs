@@ -1,0 +1,4 @@
+interface:
+  display_name: "RFC Writer"
+  short_description: "Produz RFCs arquiteturais rastreáveis em português"
+  default_prompt: "Use $rfc-writer para produzir ou revisar o RFC com base na TRANSCRICAO.md, no CHALLENGE.md, nos ADRs e no mapping deste repositório."

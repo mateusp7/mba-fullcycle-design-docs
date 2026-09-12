@@ -10,9 +10,10 @@ O trabalho também busca manter a rastreabilidade das informações, conectando 
 
 - **OpenAI Codex**: usado para ler o repositório, analisar a transcrição, identificar decisões técnicas, revisar a consistência dos documentos e criar documentos.
 - **Skill Creator**: utilizada para a criação/ajustes das skills de `fdd-writer`, `prd-writer`, `adr-writer` e `rfc-writer`.
+- **Skill customizada `adr-writer`**: usada para registrar as decisões arquiteturais, alternativas, trade-offs e sua rastreabilidade até as fontes do projeto.
+- **Skill customizada `rfc-writer`**: usada para estruturar o RFC arquitetural com base na transcrição, nos ADRs e nos requisitos do desafio.
 - **Skill customizada `fdd-writer`**: usada para conduzir a estruturação do FDD, cobrindo fluxos, contratos, resiliência, observabilidade e critérios de aceite.
 - **Skill customizada `prd-writer`**: usada como base para organizar o PRD, seus requisitos, funcionalidades, dependências e critérios de aceitação.
-- **Skill customizada `adr-writer`**: usada para registrar as decisões arquiteturais, alternativas, trade-offs e sua rastreabilidade até as fontes do projeto.
 
 ## Workflow adotado
 
@@ -25,6 +26,10 @@ Neste momento, foi adicionada a interação para criação do arquivo [`docs/map
 Após a criação do arquivo [`docs/mapping.md`](docs/mapping.md), foi iniciado o processo da criação da skill de geração de um adr, sendo adaptado ao cenário atual do projeto. Para esse caso, solicitei que a IA me gerasse um prompt para criação da skill, com base no meu prompt, para que ela cubra todas as necessidades da seção do documento de ADR.
 
 > Visualizei uma oportunidade de modificação da skill, possibilitando a instancia de 6 subagents para as tarefas, fazendo com que o agente principal seja apenas o orquestrador, evitando, assim, um estouro de janela principal de contexto.
+
+### Geração da skill de rfc-writer
+
+Após a consolidação dos ADRs, foi criada a skill `rfc-writer` para estruturar o RFC arquitetural com base na `TRANSCRICAO.md`, nos ADRs e nos requisitos do `CHALLENGE.md`. A skill também orienta a separação entre o RFC, o FDD e o PRD, mantendo no RFC apenas a proposta arquitetural, as alternativas, as questões em aberto, os impactos e os riscos.
 
 ## Prompts customizados
 
