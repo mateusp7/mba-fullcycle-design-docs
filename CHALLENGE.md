@@ -193,11 +193,11 @@ A entrega é avaliada contra os critérios abaixo. Todos são obrigatórios.
 
 ### RFC (`docs/RFC.md`)
 
-- ☐ Arquivo existe e está em Markdown
-- ☐ Contém todas as seções obrigatórias listadas no requisito 2
-- ☐ Seção "Alternativas consideradas" lista pelo menos 2 alternativas descartadas na reunião, cada uma com o trade-off que motivou o descarte
-- ☐ Seção "Questões em aberto" lista pelo menos 2 pontos adiados ou não decididos na reunião
-- ☐ Referencia, com link, pelo menos 2 ADRs do pacote
+- [X] Arquivo existe e está em Markdown
+- [X] Contém todas as seções obrigatórias listadas no requisito 2
+- [X] Seção "Alternativas consideradas" lista pelo menos 2 alternativas descartadas na reunião, cada uma com o trade-off que motivou o descarte
+- [X] Seção "Questões em aberto" lista pelo menos 2 pontos adiados ou não decididos na reunião
+- [X] Referencia, com link, pelo menos 2 ADRs do pacote
 
 ### FDD (`docs/FDD.md`)
 
